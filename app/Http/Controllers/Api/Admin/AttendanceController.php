@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\Admin;
 
 use App\Models\Attendance;
 use App\Models\OvertimeRequest;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
@@ -17,14 +18,17 @@ class AttendanceController extends BaseAdminController
         $endDate = $request->get('end_date', Carbon::today()->toDateString());
         $status = $request->get('status');
         $employeeId = $request->get('employee_id');
+        $department = $request->get('department');
 
-        $query = Attendance::with(['user', 'user.shift'])->whereBetween('date', [$startDate, $endDate]);
+        $query = Attendance::with(['user', 'user.shift', 'user.jobPosition'])->whereBetween('date', [$startDate, $endDate]);
 
-        if ($user->role === 'spv') {
-            $query->whereHas('user', function ($q) use ($user) {
-                $q->where('supervisor_id', $user->id);
+        if ($department) {
+            $query->whereHas('user', function ($q) use ($department) {
+                $q->where('department_id', $department);
             });
         }
+
+
 
         if ($status) {
             $query->where('status', $status);
@@ -42,7 +46,7 @@ class AttendanceController extends BaseAdminController
                 'id' => $a->id,
                 'employee_name' => $a->user->name,
                 'employee_id' => $a->user->employee_code,
-                'position' => $a->user->position?->name ?? $a->user->position_name ?? 'Karyawan',
+                'position' => $a->user->jobPosition?->name ?? 'Karyawan',
                 'date' => $a->date,
                 'formatted_date' => Carbon::parse($a->date)->format('d M Y'),
                 'shift_name' => $a->user->shift->name ?? 'Reguler',
@@ -67,7 +71,8 @@ class AttendanceController extends BaseAdminController
         return response()->json([
             'success' => true,
             'data' => $mapped,
-            'summary' => $summary
+            'summary' => $summary,
+            'departments' => \App\Models\Department::orderBy('name', 'asc')->get(['id', 'name'])
         ]);
     }
 
@@ -103,11 +108,7 @@ class AttendanceController extends BaseAdminController
         $status = $request->get('status', 'pending');
         $query = OvertimeRequest::with('user');
 
-        if ($user->role === 'spv') {
-            $query->whereHas('user', function ($q) use ($user) {
-                $q->where('supervisor_id', $user->id);
-            });
-        }
+
 
         $requests = $query->where('status', $status)->get();
         return response()->json(['success' => true, 'data' => $requests]);

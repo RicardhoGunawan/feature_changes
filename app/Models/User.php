@@ -12,12 +12,12 @@ use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Casts\Attribute;
-use Spatie\Permission\Traits\HasRoles;
+
 
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
-    use HasApiTokens, HasFactory, Notifiable, HasRoles;
+    use HasApiTokens, HasFactory, Notifiable;
 
     /**
      * The attributes that are mass assignable.
@@ -32,7 +32,7 @@ class User extends Authenticatable
         'password',
         'position', // Kept for legacy compatibility
         'position_id', // New structural position
-        'department',
+        'department_id', // New structural department
         'phone',
         'address',
         'join_date',
@@ -40,7 +40,6 @@ class User extends Authenticatable
         'is_active',
         'shift_id',
         'location_id',
-        'supervisor_id',
         'remaining_leave',
         'sick_leave_remaining',
         'leave_reset_year',
@@ -127,17 +126,13 @@ class User extends Authenticatable
                 $parentPosition = $currentPosition->parent;
                 $approver = $parentPosition->users()
                     ->where('is_active', true)
-                    ->where('department', $this->department) // Ensure same department for SPV/Manager level
+                    ->where('department_id', $this->department_id) // Match by ID
                     ->first();
-                
-                // If special case (e.g. Director overseeing all), you might want to relax department check
-                // for top-level positions, but let's follow user's strict request first.
                 
                 if ($approver) {
                     return $approver;
                 }
                 
-                // If vacant or wrong department, climb higher
                 $currentPosition = $parentPosition;
             }
         }
@@ -161,6 +156,11 @@ class User extends Authenticatable
     public function supervisor(): BelongsTo
     {
         return $this->belongsTo(User::class, 'supervisor_id');
+    }
+
+    public function department(): BelongsTo
+    {
+        return $this->belongsTo(Department::class, 'department_id');
     }
 
     public function subordinates(): HasMany
@@ -188,7 +188,7 @@ class User extends Authenticatable
      */
     public function getCurrentRoleAttribute(): string
     {
-        return $this->roles->first()?->name ?? $this->attributes['role'] ?? 'employee';
+        return $this->attributes['role'] ?? 'employee';
     }
 }
 

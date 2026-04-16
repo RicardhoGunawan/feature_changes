@@ -37,11 +37,18 @@ class LeaveController extends BaseAdminController
         $month  = $request->input('month');
         $type   = $request->input('type', 'all');
         $userId = $request->input('user_id');
+        $department = $request->input('department');
 
         $query = LeaveRequest::with(['user.jobPosition', 'supervisor', 'hr']);
 
+        if ($department) {
+            $query->whereHas('user', function($q) use ($department) {
+                $q->where('department_id', $department);
+            });
+        }
+
         // ── Visibility Filter Based on Role/Position ──────────────────────────────
-        $isAdmin = ($user->role === 'administrator' || $user->hasRole('administrator'));
+        $isAdmin = ($user->role === 'administrator');
 
         // Jika user adalah Employee biasa, ATAU jika sedang secara spesifik melihat antrean "pending_spv"
         // Maka batasi pencarian HANYA ke bawahan langsungnya.
@@ -104,7 +111,7 @@ class LeaveController extends BaseAdminController
                     'id'             => $l->user->id,
                     'name'           => $l->user->name,
                     'position'       => $l->user->jobPosition?->name ?? 'Karyawan',
-                    'department'     => $l->user->department ?? '-',
+                    'department'     => $l->user->department?->name ?? '-',
                     'employee_id'    => $l->user->employee_code,
                     'remaining_leave'=> $l->user->remaining_leave,
                 ],
@@ -117,7 +124,11 @@ class LeaveController extends BaseAdminController
             ];
         });
 
-        return response()->json(['success' => true, 'data' => $requests]);
+        return response()->json([
+            'success' => true, 
+            'data' => $requests,
+            'departments' => \App\Models\Department::orderBy('name', 'asc')->get(['id', 'name'])
+        ]);
     }
 
     /**
@@ -135,7 +146,7 @@ class LeaveController extends BaseAdminController
 
         $leave   = LeaveRequest::with('user.jobPosition')->findOrFail($id);
         $approver = $request->user();
-        $isAdmin  = ($approver->role === 'administrator' || $approver->hasRole('administrator'));
+        $isAdmin  = ($approver->role === 'administrator');
 
         // ── Authorization: Check if approver has position authority ───────────────
         if ($leave->status === 'pending_spv') {

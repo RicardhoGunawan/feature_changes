@@ -1,11 +1,5 @@
 <aside id="sidebar" class="sidebar">
-    <style>
-        /* Hide role/permission items only UNTIL auth logic is finished */
-        .sidebar:not(.auth-loaded) [data-role],
-        .sidebar:not(.auth-loaded) [data-permission] {
-            display: none !important;
-        }
-    </style>
+
     <div class="logo-area">
         <a href="{{ url('/admin') }}" class="d-inline-flex align-items-center text-decoration-none text-dark">
             <svg width="24" height="24" viewBox="0 0 62 67" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -22,12 +16,12 @@
         </a>
     </div>
     <ul class="nav flex-column mt-3">
-        <li class="px-4 py-2 sidebar-label" data-role="admin,spv,hr">
+        <li class="px-4 py-2 sidebar-label" data-role="administrator,employee">
             <small class="text-secondary text-uppercase fw-bold"
                 style="font-size: 10px; letter-spacing: 1px;">Main</small>
         </li>
 
-        <li class="nav-item" data-role="admin,spv,hr" data-permission="view_dashboard">
+        <li class="nav-item" data-role="administrator,employee">
             <a class="nav-link {{ Request::is('admin/dashboard') ? 'active' : '' }}"
                 href="{{ url('/admin/dashboard') }}">
                 <i class="ti ti-home"></i>
@@ -35,7 +29,7 @@
             </a>
         </li>
 
-        <li class="nav-item" data-role="admin,spv,hr" data-permission="view_employee">
+        <li class="nav-item" data-role="administrator">
             <a class="nav-link {{ Request::is('admin/employees*') ? 'active' : '' }}"
                 href="{{ url('/admin/employees') }}">
                 <i class="ti ti-users"></i>
@@ -43,15 +37,7 @@
             </a>
         </li>
 
-        <li class="nav-item" data-role="admin" data-permission="view_roles">
-            <a class="nav-link {{ Request::is('admin/positions*') ? 'active' : '' }}"
-                href="{{ url('/admin/positions') }}">
-                <i class="ti ti-hierarchy-2"></i>
-                <span class="nav-text">Struktur Jabatan</span>
-            </a>
-        </li>
-
-        <li class="nav-item" data-role="admin,spv,hr" data-permission="view_attendance">
+        <li class="nav-item" data-role="administrator,employee">
             <a class="nav-link {{ Request::is('admin/attendance*') ? 'active' : '' }}"
                 href="{{ url('/admin/attendance') }}">
                 <i class="ti ti-calendar-check"></i>
@@ -59,20 +45,40 @@
             </a>
         </li>
 
-        <li class="nav-item" data-role="admin,spv,hr" data-permission="view_leave">
+        <li class="nav-item" data-role="administrator,employee">
             <a class="nav-link {{ Request::is('admin/leave*') ? 'active' : '' }}" href="{{ url('/admin/leave') }}">
                 <i class="ti ti-mail"></i>
                 <span class="nav-text">Izin & Cuti</span>
             </a>
         </li>
 
-        <li class="px-4 py-2 mt-2 sidebar-label" data-role="admin"
-            data-permission="manage_location,manage_schedule,manage_roles,view_roles">
+        <li class="px-4 py-2 mt-2 sidebar-label" data-role="administrator">
+            <small class="text-secondary text-uppercase fw-bold"
+                style="font-size: 10px; letter-spacing: 1px;">Master Data</small>
+        </li>
+
+        <li class="nav-item" data-role="administrator">
+            <a class="nav-link {{ Request::is('admin/departments*') ? 'active' : '' }}"
+                href="{{ url('/admin/departments') }}">
+                <i class="ti ti-building-community"></i>
+                <span class="nav-text">Departemen</span>
+            </a>
+        </li>
+
+        <li class="nav-item" data-role="administrator">
+            <a class="nav-link {{ Request::is('admin/positions*') ? 'active' : '' }}"
+                href="{{ url('/admin/positions') }}">
+                <i class="ti ti-hierarchy-2"></i>
+                <span class="nav-text">Struktur Jabatan</span>
+            </a>
+        </li>
+
+        <li class="px-4 py-2 mt-2 sidebar-label">
             <small class="text-secondary text-uppercase fw-bold"
                 style="font-size: 10px; letter-spacing: 1px;">Settings</small>
         </li>
 
-        <li data-role="admin" data-permission="manage_location">
+        <li data-role="administrator">
             <a class="nav-link {{ Request::is('admin/locations*') ? 'active' : '' }}"
                 href="{{ url('/admin/locations') }}">
                 <i class="ti ti-map-pin"></i>
@@ -80,7 +86,7 @@
             </a>
         </li>
 
-        <li data-role="admin" data-permission="manage_schedule">
+        <li data-role="administrator">
             <a class="nav-link {{ Request::is('admin/schedules*') ? 'active' : '' }}"
                 href="{{ url('/admin/schedules') }}">
                 <i class="ti ti-clock"></i>
@@ -88,7 +94,7 @@
             </a>
         </li>
 
-        <li data-role="admin" data-permission="manage_schedule">
+        <li data-role="administrator">
             <a class="nav-link {{ Request::is('admin/holidays*') ? 'active' : '' }}"
                 href="{{ url('/admin/holidays') }}">
                 <i class="ti ti-calendar-event"></i>
@@ -96,11 +102,6 @@
             </a>
         </li>
 
-        <li data-role="admin" data-permission="manage_roles,view_roles">
-            <a class="nav-link {{ Request::is('admin/roles*') ? 'active' : '' }}" href="{{ url('/admin/roles') }}">
-                <i class="ti ti-shield-lock"></i>
-                <span class="nav-text">Role & Access</span>
-            </a>
-        </li>
+
     </ul>
 </aside>

@@ -13,7 +13,7 @@ class AdminViewController extends Controller
         $user = auth()->user();
         if (!$user)
             return true; // Let the frontend handle if no session in web
-        if ($user->role === 'admin')
+        if ($user->role === 'administrator' || $user->role === 'admin')
             return true;
 
         $roleNames = $user->roles->pluck('name')->toArray();
@@ -76,6 +76,12 @@ class AdminViewController extends Controller
     {
         $this->checkAccess('view_roles');
         return view('admin.roles');
+    }
+
+    public function departments()
+    {
+        $this->checkAccess('view_roles');
+        return view('admin.departments');
     }
 
     public function positions()

@@ -13,7 +13,8 @@ class RoleMiddleware
      */
     public function handle(Request $request, Closure $next, ...$roles): Response
     {
-        if (! $request->user() || ! $request->user()->hasAnyRole($roles)) {
+        $user = $request->user();
+        if (! $user || ! in_array($user->role, $roles)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Unauthorized access.',

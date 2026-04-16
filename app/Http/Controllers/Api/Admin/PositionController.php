@@ -10,7 +10,7 @@ class PositionController extends BaseAdminController
     public function index(Request $request)
     {
         $this->validatePermission($request, 'view_roles');
-        $positions = Position::with(['parent'])->orderBy('level', 'desc')->get();
+        $positions = Position::with(['parent', 'department'])->orderBy('level', 'desc')->get();
         return response()->json(['success' => true, 'data' => $positions]);
     }
 
@@ -21,7 +21,7 @@ class PositionController extends BaseAdminController
         $validated = $request->validate([
             'name' => 'required|string',
             'parent_id' => 'nullable|exists:positions,id',
-            'department' => 'nullable|string',
+            'department_id' => 'nullable|exists:departments,id',
             'level' => 'required|integer'
         ]);
 

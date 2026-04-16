@@ -3,7 +3,6 @@
 @section('title', 'Izin & Cuti')
 
 @push('styles')
-<link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.bootstrap5.min.css" rel="stylesheet">
 <style>
     .dropdown-menu { z-index: 1060; }
 </style>
@@ -24,38 +23,47 @@
 
 <div class="card border-0 shadow-sm mb-4 rounded-3">
     <div class="card-body p-4">
-        <form id="leaveFilterForm" class="row g-3 align-items-end">
+        <form id="leaveFilterForm" class="row g-3">
+            <!-- Row 1: Month, Dept, Status, Type -->
             <div class="col-md-3">
-                <label class="form-label small fw-semibold">Periode Bulan</label>
-                <input type="month" name="month" id="monthInput" class="form-control" value="{{ date('Y-m') }}" required>
+                <label class="form-label small fw-bold text-uppercase text-secondary" style="font-size: 10px;">Periode Bulan</label>
+                <input type="month" name="month" id="monthInput" class="form-control shadow-none" value="{{ date('Y-m') }}" required>
             </div>
             <div class="col-md-3">
-                <label class="form-label small fw-semibold">Karyawan</label>
-                <select name="employee_id" id="employeeFilterSelect" class="form-select">
-                    <option value=""></option>
+                <label class="form-label small fw-bold text-uppercase text-secondary" style="font-size: 10px;">Departemen</label>
+                <select name="department" id="departmentFilterSelect" class="form-select shadow-none">
+                    <option value="">Semua Dept</option>
                 </select>
             </div>
-            <div class="col-md-2">
-                <label class="form-label small fw-semibold">Status</label>
-                <select name="status" class="form-select">
+            <div class="col-md-3">
+                <label class="form-label small fw-bold text-uppercase text-secondary" style="font-size: 10px;">Status</label>
+                <select name="status" class="form-select shadow-none">
                     <option value="all">Semua Status</option>
                     <option value="pending" selected>Menunggu Review</option>
                     <option value="approved">Disetujui</option>
                     <option value="rejected">Ditolak</option>
                 </select>
             </div>
-            <div class="col-md-2">
-                <label class="form-label small fw-semibold">Tipe</label>
-                <select name="type" class="form-select">
+            <div class="col-md-3">
+                <label class="form-label small fw-bold text-uppercase text-secondary" style="font-size: 10px;">Tipe</label>
+                <select name="type" class="form-select shadow-none">
                     <option value="all">Semua Tipe</option>
                     <option value="izin">Izin</option>
                     <option value="sakit">Sakit</option>
                     <option value="cuti">Cuti</option>
                 </select>
             </div>
-            <div class="col-md-2">
-                <button type="submit" class="btn btn-primary w-100 shadow-sm">
-                    <i class="ti ti-filter me-1"></i> Filter
+
+            <!-- Row 2: Employee & Filter Button -->
+            <div class="col-md-9">
+                <label class="form-label small fw-bold text-uppercase text-secondary" style="font-size: 10px;">Cari Karyawan</label>
+                <select name="employee_id" id="employeeFilterSelect" class="form-select shadow-none">
+                    <option value="">Semua Karyawan</option>
+                </select>
+            </div>
+            <div class="col-md-3 pt-4">
+                <button type="submit" class="btn btn-primary w-100 fw-bold shadow-sm mt-1">
+                    <i class="ti ti-filter me-1"></i> Terapkan Filter
                 </button>
             </div>
         </form>
@@ -138,6 +146,5 @@
 @endsection
 
 @push('scripts')
-<script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
 <script src="{{ asset('admin-assets/js/leave.js') }}" type="module"></script>
 @endpush

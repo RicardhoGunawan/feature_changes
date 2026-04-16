@@ -3,7 +3,7 @@
 @section('title', 'Struktur Jabatan')
 
 @push('styles')
-<link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.bootstrap5.min.css" rel="stylesheet">
+<!-- TomSelect removed -->
 @endpush
 
 @section('content')
@@ -68,7 +68,9 @@
                     </div>
                     <div class="col-md-12">
                         <label class="form-label small fw-semibold">Departemen</label>
-                        <input type="text" name="department" class="form-control" placeholder="Contoh: Engineering">
+                        <select name="department_id" id="departmentSelect" class="form-select">
+                            <option value="">Pilih Departemen...</option>
+                        </select>
                     </div>
                     <div class="col-md-12">
                         <label class="form-label small fw-semibold">Tingkatan (Level)</label>
@@ -87,6 +89,5 @@
 @endsection
 
 @push('scripts')
-<script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
 <script src="{{ asset('admin-assets/js/positions.js') }}" type="module"></script>
 @endpush

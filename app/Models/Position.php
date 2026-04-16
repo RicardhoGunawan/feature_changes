@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Position extends Model
 {
-    protected $fillable = ['name', 'parent_id', 'department', 'level'];
+    protected $fillable = ['name', 'parent_id', 'department_id', 'level'];
 
     /**
      * Get the parent position (Superior)
@@ -24,6 +24,14 @@ class Position extends Model
     public function children(): HasMany
     {
         return $this->hasMany(Position::class, 'parent_id')->orderBy('level', 'desc');
+    }
+
+    /**
+     * Get the department this position belongs to
+     */
+    public function department(): BelongsTo
+    {
+        return $this->belongsTo(Department::class, 'department_id');
     }
 
     /**

@@ -3,7 +3,7 @@
 @section('title', 'Laporan Absensi')
 
 @push('styles')
-<link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.bootstrap5.min.css" rel="stylesheet">
+<!-- Styles simplified: TomSelect removed -->
 @endpush
 
 @section('content')
@@ -22,36 +22,47 @@
 <!-- Filter Card -->
 <div class="card border-0 shadow-sm mb-4 rounded-3">
     <div class="card-body p-4">
-        <form id="attendanceFilterForm" class="row g-3 align-items-end">
-            <div class="col-md-2">
-                <label class="form-label small fw-semibold">Tanggal Mulai</label>
-                <input type="date" name="start_date" id="startDateInput" class="form-control" required>
-            </div>
-            <div class="col-md-2">
-                <label class="form-label small fw-semibold">Tanggal Selesai</label>
-                <input type="date" name="end_date" id="endDateInput" class="form-control" required>
+        <form id="attendanceFilterForm" class="row g-3">
+            <!-- Row 1: Period & Dept -->
+            <div class="col-md-3">
+                <label class="form-label small fw-bold text-uppercase text-secondary" style="font-size: 10px;">Tanggal Mulai</label>
+                <input type="date" name="start_date" id="startDateInput" class="form-control shadow-none" required>
             </div>
             <div class="col-md-3">
-                <label class="form-label small fw-semibold">Karyawan</label>
-                <select name="employee_id" id="employeeFilterSelect" class="form-select">
-                    <option value=""></option>
+                <label class="form-label small fw-bold text-uppercase text-secondary" style="font-size: 10px;">Tanggal Selesai</label>
+                <input type="date" name="end_date" id="endDateInput" class="form-control shadow-none" required>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small fw-bold text-uppercase text-secondary" style="font-size: 10px;">Departemen</label>
+                <select name="department" id="departmentFilterSelect" class="form-select shadow-none">
+                    <option value="">Semua Dept</option>
                 </select>
             </div>
-            <div class="col-md-2">
-                <label class="form-label small fw-semibold">Status</label>
-                <select name="status" class="form-select">
+            <div class="col-md-3">
+                <label class="form-label small fw-bold text-uppercase text-secondary" style="font-size: 10px;">Status</label>
+                <select name="status" class="form-select shadow-none">
                     <option value="">Semua Status</option>
                     <option value="present">Tepat Waktu</option>
                     <option value="late">Terlambat</option>
                     <option value="incomplete">Tidak Selesai</option>
                 </select>
             </div>
-            <div class="col-md-3 d-flex gap-2">
-                <button type="submit" class="btn btn-primary flex-grow-1 shadow-sm">
-                    <i class="ti ti-filter me-1"></i> Filter
+
+            <!-- Row 2: Employee & Buttons -->
+            <div class="col-md-6">
+                <label class="form-label small fw-bold text-uppercase text-secondary" style="font-size: 10px;">Cari Karyawan</label>
+                <select name="employee_id" id="employeeFilterSelect" class="form-select shadow-none">
+                    <option value="">Semua Karyawan</option>
+                </select>
+            </div>
+            <div class="col-md-3 pt-4">
+                <button type="submit" class="btn btn-primary w-100 fw-bold shadow-sm mt-1">
+                    <i class="ti ti-filter me-1"></i> Terapkan Filter
                 </button>
-                <button type="button" id="exportExcelBtn" class="btn btn-success flex-grow-1 shadow-sm">
-                    <i class="ti ti-file-spreadsheet me-1"></i> Export
+            </div>
+            <div class="col-md-3 pt-4">
+                <button type="button" id="exportExcelBtn" class="btn btn-success w-100 fw-bold shadow-sm mt-1">
+                    <i class="ti ti-file-spreadsheet me-1"></i> Export Excel
                 </button>
             </div>
         </form>
@@ -164,6 +175,5 @@
 @endsection
 
 @push('scripts')
-<script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
 <script src="{{ asset('admin-assets/js/attendance.js') }}" type="module"></script>
 @endpush

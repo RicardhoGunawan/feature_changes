@@ -169,8 +169,7 @@ class UserSeeder extends Seeder
                 ]
             );
 
-            // Assign Spatie role
-            $user->syncRoles([$data['role']]);
+
 
             $roleLabel = $data['role'] === 'administrator' ? '👑 Admin' : '📱 Employee';
             $this->command->info("✓ {$roleLabel} | [{$data['position_name']}] {$data['name']} → {$data['username']} / password123");

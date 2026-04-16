@@ -3,7 +3,7 @@
 @section('title', 'Daftar Karyawan')
 
 @push('styles')
-<link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.bootstrap5.min.css" rel="stylesheet">
+<!-- TomSelect removed -->
 @endpush
 
 @section('content')
@@ -39,7 +39,6 @@
                         <th class="px-4">Karyawan</th>
                         <th>ID / Username</th>
                         <th>Posisi / Dept</th>
-                        <th>Atasan</th>
                         <th>Shift</th>
                         <th>Status</th>
                         <th class="text-end px-4">Aksi</th>
@@ -47,7 +46,7 @@
                 </thead>
                 <tbody id="employeeTableBody">
                     <tr>
-                        <td colspan="7" class="text-center py-5">
+                        <td colspan="6" class="text-center py-5">
                             <div class="spinner-border text-primary"></div>
                         </td>
                     </tr>
@@ -95,24 +94,13 @@
                         </select>
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label small fw-semibold">Departemen</label>
-                        <input type="text" name="department" class="form-control" placeholder="Contoh: IT">
-                    </div>
-                    <div class="col-md-6">
                         <label class="form-label small fw-semibold">Role User</label>
                         <select name="role" class="form-select" required>
-                            <option value="employee">Employee</option>
-                            <option value="spv">Supervisor / Manager</option>
-                            <option value="hr">HR / Administrator</option>
-                            <option value="admin">Main Admin</option>
+                            <option value="employee">Employee / Staff</option>
+                            <option value="administrator">Administrator</option>
                         </select>
                     </div>
-                    <div class="col-md-6">
-                        <label class="form-label small fw-semibold">Atasan Langsung (Supervisor)</label>
-                        <select name="supervisor_id" id="supervisorSelect" class="form-select">
-                            <option value="">Tanpa Atasan</option>
-                        </select>
-                    </div>
+
                     <div class="col-md-6">
                         <label class="form-label small fw-semibold">Shift Kerja</label>
                         <select name="shift_id" id="shiftSelect" class="form-select">
@@ -137,6 +125,5 @@
 @endsection
 
 @push('scripts')
-<script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
 <script src="{{ asset('admin-assets/js/employees.js') }}" type="module"></script>
 @endpush

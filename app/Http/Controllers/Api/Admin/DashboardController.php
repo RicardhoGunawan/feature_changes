@@ -14,7 +14,6 @@ class DashboardController extends BaseAdminController
     {
         $this->validatePermission($request, 'view_dashboard');
         $user = $request->user();
-        $isSpv = $user->role === 'spv';
         $uid = $user->id;
 
         $today = Carbon::today()->toDateString();
@@ -23,18 +22,10 @@ class DashboardController extends BaseAdminController
 
         // Base Query for Employees
         $empQuery = User::where('role', 'employee')->where('is_active', true);
-        if ($isSpv) {
-            $empQuery->where('supervisor_id', $uid);
-        }
         $totalEmployees = $empQuery->count();
 
         // 2. Today Stats
         $attQuery = Attendance::where('date', $today);
-        if ($isSpv) {
-            $attQuery->whereHas('user', function ($q) use ($uid) {
-                $q->where('supervisor_id', $uid);
-            });
-        }
         $todayAttendance = $attQuery->get();
         $checkedInCount = $todayAttendance->count();
         $lateCount = $todayAttendance->where('status', 'late')->count();
@@ -46,25 +37,17 @@ class DashboardController extends BaseAdminController
 
         // 3. Pending Requests
         $leaveQuery = LeaveRequest::where('status', 'pending_spv');
-        if ($isSpv) {
-            $leaveQuery->where('supervisor_id', $uid);
-        }
         $pendingLeaves = $leaveQuery->count();
 
         // 4. Recent Activities
-        $actQuery = Attendance::with('user')->where('date', $today);
-        if ($isSpv) {
-            $actQuery->whereHas('user', function ($q) use ($uid) {
-                $q->where('supervisor_id', $uid);
-            });
-        }
+        $actQuery = Attendance::with('user.jobPosition')->where('date', $today);
         $recentActivities = $actQuery->orderBy('updated_at', 'desc')
             ->limit(10)
             ->get()
             ->map(function ($a) {
                 return [
                     'employee_name' => $a->user->name,
-                    'position' => $a->user->position ?? 'Karyawan',
+                    'position' => $a->user->jobPosition?->name ?? 'Karyawan',
                     'time' => $a->check_out_time ? $a->check_out_time->addHours(7)->format('H:i') : $a->check_in_time->addHours(7)->format('H:i'),
                     'action' => $a->check_out_time ? 'Check Out' : 'Check In',
                     'status' => $a->status,
@@ -76,11 +59,6 @@ class DashboardController extends BaseAdminController
         for ($i = 6; $i >= 0; $i--) {
             $date = Carbon::today()->subDays($i)->toDateString();
             $dAttQuery = Attendance::where('date', $date);
-            if ($isSpv) {
-                $dAttQuery->whereHas('user', function ($q) use ($uid) {
-                    $q->where('supervisor_id', $uid);
-                });
-            }
             $dAtt = $dAttQuery->get();
             $chartData[] = [
                 'date' => $date,
@@ -91,11 +69,6 @@ class DashboardController extends BaseAdminController
 
         // 6. Monthly Stats
         $monthAttQuery = Attendance::whereYear('date', $thisYear)->whereMonth('date', $thisMonth);
-        if ($isSpv) {
-            $monthAttQuery->whereHas('user', function ($q) use ($uid) {
-                $q->where('supervisor_id', $uid);
-            });
-        }
         $monthAtt = $monthAttQuery->get();
         $monthlyStats = [
             'total_attendance' => $monthAtt->count(),

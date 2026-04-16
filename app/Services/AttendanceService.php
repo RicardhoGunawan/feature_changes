@@ -57,15 +57,19 @@ class AttendanceService
             }
         }
 
-        // 3. Determine status
+        // 3. Determine status and late minutes
         $status = 'present';
+        $lateMinutes = 0;
         if ($user->shift) {
             $now = Carbon::now();
-            $shiftStart = Carbon::createFromFormat('H:i:s', $user->shift->start_time);
+            // Use same date for comparison
+            $shiftStart = Carbon::createFromTimeString($user->shift->start_time);
             $lateThreshold = $shiftStart->copy()->addMinutes($user->shift->late_tolerance_minutes);
 
-            if ($now->toTimeString() > $lateThreshold->toTimeString()) {
+            if ($now->greaterThan($lateThreshold)) {
                 $status = 'late';
+                // Calculate from the theoretical start time
+                $lateMinutes = $now->diffInMinutes($shiftStart);
             }
         }
 
@@ -77,7 +81,9 @@ class AttendanceService
             'check_in_time' => Carbon::now(),
             'check_in_latitude' => $lat,
             'check_in_longitude' => $lon,
+            'check_in_location_id' => $user->location_id,
             'status' => $status,
+            'late_minutes' => $lateMinutes,
         ]);
     }
 
@@ -100,10 +106,18 @@ class AttendanceService
             throw new Exception('Anda sudah melakukan check-out hari ini.');
         }
 
+        $checkOutTime = Carbon::now();
+        $duration = 0;
+        if ($attendance->check_in_time) {
+            $duration = Carbon::parse($attendance->check_in_time)->diffInMinutes($checkOutTime);
+        }
+
         $attendance->update([
-            'check_out_time' => Carbon::now(),
+            'check_out_time' => $checkOutTime,
             'check_out_latitude' => $lat,
             'check_out_longitude' => $lon,
+            'check_out_location_id' => $user->location_id,
+            'duration_minutes' => $duration
         ]);
 
         return $attendance;

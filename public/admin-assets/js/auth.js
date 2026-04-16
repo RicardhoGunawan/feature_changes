@@ -35,7 +35,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (response.success) {
                     api.notify("Login berhasil! Mengalihkan...");
 
-                    localStorage.setItem("session_token", response.data.token);
+                    localStorage.setItem("session_token", response.data.access_token);
                     localStorage.setItem(
                         "user_data",
                         JSON.stringify(response.data.user),
@@ -116,7 +116,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         ".sidebar li[data-role], .sidebar li[data-permission]",
                     )
                     .forEach((el) => {
-                        if (userRole === "admin") {
+                        if (userRole === "administrator") {
                             el.style.display = "";
                             return;
                         }
@@ -130,10 +130,14 @@ document.addEventListener("DOMContentLoaded", () => {
                         
                         let hasPermissionMatch = true;
                         if (requiredPermission) {
-                            const permsArr = requiredPermission.split(",").map(p => p.trim());
-                            hasPermissionMatch = permsArr.some((p) =>
-                                userPermissions.includes(p)
-                            );
+                            if (userPermissions.includes('all')) {
+                                hasPermissionMatch = true;
+                            } else {
+                                const permsArr = requiredPermission.split(",").map(p => p.trim());
+                                hasPermissionMatch = permsArr.some((p) =>
+                                    userPermissions.includes(p)
+                                );
+                            }
                         }
 
                         // Decision: Satisfy BOTH if both are provided
@@ -152,9 +156,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 const currentPath = window.location.pathname;
 
                 // SPECIAL FIX: If on dashboard but unauthorized, find first available page
-                if (currentPath === '/admin/dashboard' && userRole !== 'admin' && !userPermissions.includes('view_dashboard')) {
+                if (currentPath === '/admin/dashboard' && userRole !== 'administrator' && !userPermissions.includes('view_dashboard') && !userPermissions.includes('all')) {
                     const firstSafePath = Object.entries(PATH_PROTECTION).find(([path, perm]) => 
-                        userPermissions.includes(perm)
+                        userPermissions.includes(perm) || userPermissions.includes('all')
                     );
                     
                     if (firstSafePath) {
@@ -172,8 +176,9 @@ document.addEventListener("DOMContentLoaded", () => {
                         currentPath.startsWith(path + "/")
                     ) {
                         if (
-                            userRole !== "admin" &&
-                            !userPermissions.includes(permission)
+                            userRole !== "administrator" &&
+                            !userPermissions.includes(permission) &&
+                            !userPermissions.includes('all')
                         ) {
                             console.warn(
                                 "Unauthorized Path Access:",

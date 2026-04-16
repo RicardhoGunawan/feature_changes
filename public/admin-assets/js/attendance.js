@@ -35,11 +35,18 @@ document.addEventListener('DOMContentLoaded', () => {
                         option.textContent = `${emp.name} (${emp.employee_id || '-'})`;
                         filterSelect.appendChild(option);
                     });
-                    new TomSelect("#employeeFilterSelect", {
-                        create: false,
-                        sortField: { field: "text", direction: "asc" },
-                        placeholder: "Semua Karyawan",
-                        allowEmptyOption: true,
+
+                    // Initialize Select2
+                    $('#employeeFilterSelect').select2({
+                        theme: 'bootstrap-5',
+                        width: '100%',
+                        placeholder: 'Cari Karyawan...'
+                    });
+
+                    $('#departmentFilterSelect').select2({
+                        theme: 'bootstrap-5',
+                        width: '100%',
+                        placeholder: 'Semua Dept'
                     });
                 }
 
@@ -52,11 +59,12 @@ document.addEventListener('DOMContentLoaded', () => {
                         option.textContent = `${emp.name} (${emp.employee_id || '-'})`;
                         manualSelect.appendChild(option);
                     });
-                    window.manualTomSelect = new TomSelect("#manualEmployeeSelect", {
-                        create: false,
-                        sortField: { field: "text", direction: "asc" },
-                        placeholder: "Pilih Karyawan",
-                        allowEmptyOption: true,
+                    
+                    $('#manualEmployeeSelect').select2({
+                        theme: 'bootstrap-5',
+                        dropdownParent: $('#manualAttendanceModal'),
+                        width: '100%',
+                        placeholder: 'Pilih Karyawan...'
                     });
                 }
             }
@@ -87,7 +95,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     // Reset Form
                     manualForm.reset();
-                    if (window.manualTomSelect) window.manualTomSelect.clear();
+                    $('#manualEmployeeSelect').val(null).trigger('change');
 
                     // Refresh Table
                     const startInput = document.querySelector('#startDateInput');
@@ -108,7 +116,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 formData.get('start_date'),
                 formData.get('end_date'),
                 formData.get('status'),
-                formData.get('employee_id')
+                formData.get('employee_id'),
+                formData.get('department')
             );
         });
 
@@ -122,6 +131,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     end_date: formData.get('end_date'),
                     status: formData.get('status') || '',
                     employee_id: formData.get('employee_id') || '',
+                    department: formData.get('department') || '',
                     token: token || ''
                 });
                 // POINT TO LARAVEL EXPORT ROUTE
@@ -130,7 +140,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    async function fetchAttendance(startDate, endDate, status = '', employeeId = '') {
+    async function fetchAttendance(startDate, endDate, status = '', employeeId = '', department = '') {
         tableBody.innerHTML = `<tr><td colspan="8" class="text-center py-5"><div class="spinner-border text-primary"></div></td></tr>`;
         
         try {
@@ -140,13 +150,25 @@ document.addEventListener('DOMContentLoaded', () => {
                     start_date: startDate,
                     end_date: endDate,
                     status: status,
-                    employee_id: employeeId
+                    employee_id: employeeId,
+                    department: department
                 })
             });
 
             if (response.success) {
                 renderAttendance(response.data);
                 updateSummary(response.summary);
+                
+                // Dynamically populate department list if not yet populated
+                const deptSelect = document.querySelector('#departmentFilterSelect');
+                if (deptSelect && deptSelect.options.length <= 1 && response.departments) {
+                    response.departments.forEach(dept => {
+                        const option = document.createElement('option');
+                        option.value = dept.id;
+                        option.textContent = dept.name;
+                        deptSelect.appendChild(option);
+                    });
+                }
             }
         } catch (error) {
             tableBody.innerHTML = `<tr><td colspan="8" class="text-center py-5 text-danger">${error.message}</td></tr>`;

@@ -29,11 +29,16 @@ document.addEventListener('DOMContentLoaded', () => {
                         select.appendChild(option);
                     });
 
-                    new TomSelect("#employeeFilterSelect", {
-                        create: false,
-                        sortField: { field: "text", direction: "asc" },
-                        placeholder: "Semua Karyawan",
-                        allowEmptyOption: true,
+                    $('#employeeFilterSelect').select2({
+                        theme: 'bootstrap-5',
+                        width: '100%',
+                        placeholder: 'Cari Karyawan...'
+                    });
+
+                    $('#departmentFilterSelect').select2({
+                        theme: 'bootstrap-5',
+                        width: '100%',
+                        placeholder: 'Semua Dept'
                     });
                 }
             }
@@ -48,7 +53,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 formData.get('month'),
                 formData.get('status'),
                 formData.get('type'),
-                formData.get('employee_id')
+                formData.get('employee_id'),
+                formData.get('department')
             );
         });
 
@@ -62,6 +68,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     status: formData.get('status') || 'all',
                     type: formData.get('type') || 'all',
                     user_id: formData.get('employee_id') || '',
+                    department: formData.get('department') || '',
                     token: token || ''
                 });
                 window.location.href = `/api/admin/leave/export?${params.toString()}`;
@@ -72,14 +79,25 @@ document.addEventListener('DOMContentLoaded', () => {
     const userData = JSON.parse(localStorage.getItem('user_data') || '{}');
     const userRole = userData.role || 'employee';
 
-    async function fetchLeaves(month, status = 'all', type = 'all', userId = '') {
+    async function fetchLeaves(month, status = 'all', type = 'all', userId = '', department = '') {
         tableBody.innerHTML = `<tr><td colspan="8" class="text-center py-5"><div class="spinner-border text-primary"></div></td></tr>`;
         
         try {
-            const response = await api.request(`/admin/leave?month=${month}&status=${status}&type=${type}&user_id=${userId}`);
+            const response = await api.request(`/admin/leave?month=${month}&status=${status}&type=${type}&user_id=${userId}&department=${department}`);
 
             if (response.success) {
                 renderLeaves(response.data);
+
+                // Dynamically populate department list if not yet populated
+                const deptSelect = document.querySelector('#departmentFilterSelect');
+                if (deptSelect && deptSelect.options.length <= 1 && response.departments) {
+                    response.departments.forEach(dept => {
+                        const option = document.createElement('option');
+                        option.value = dept.id;
+                        option.textContent = dept.name;
+                        deptSelect.appendChild(option);
+                    });
+                }
             }
         } catch (error) {
             tableBody.innerHTML = `<tr><td colspan="8" class="text-center py-5 text-danger">${error.message}</td></tr>`;
@@ -94,7 +112,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         tableBody.innerHTML = records.map(reg => {
             const canProcess = (userRole === 'spv' && reg.status === 'pending_spv') || 
-                               (['admin', 'hr'].includes(userRole) && reg.status === 'pending_hr');
+                               (['administrator', 'admin', 'hr'].includes(userRole) && reg.status === 'pending_hr');
 
             return `
                 <tr>
@@ -173,7 +191,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function showDetail(reg) {
         const canProcess = (userRole === 'spv' && reg.status === 'pending_spv') || 
-                           (['admin', 'hr'].includes(userRole) && reg.status === 'pending_hr');
+                           (['administrator', 'admin', 'hr'].includes(userRole) && reg.status === 'pending_hr');
 
         const content = document.getElementById('detailContent');
         content.innerHTML = `

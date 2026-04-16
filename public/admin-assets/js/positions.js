@@ -11,16 +11,25 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     const bsModal = new bootstrap.Modal(modalEl);
     let allPositions = [];
-    let parentSelect;
 
-    function initParentSelect() {
-        if (parentSelect) parentSelect.destroy();
-        parentSelect = new TomSelect('#parentSelect', {
-            create: false,
-            sortField: { field: 'text', order: 'asc' },
-            placeholder: 'Pilih Atasan (Superior)...',
-            allowEmptyOption: true
+    function initSelects() {
+        $('#parentSelect').select2({
+            theme: 'bootstrap-5',
+            dropdownParent: $('#addPositionModal'),
+            width: '100%',
+            placeholder: 'Pilih Atasan...'
         });
+        
+        $('#departmentSelect').select2({
+            theme: 'bootstrap-5',
+            dropdownParent: $('#addPositionModal'),
+            width: '100%',
+            placeholder: 'Pilih Departemen...'
+        });
+    }
+
+    function setSelect2Value(selector, value) {
+        $(selector).val(value).trigger('change');
     }
 
     async function fetchPositions() {
@@ -39,6 +48,21 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
+    async function loadDepartments() {
+        try {
+            const res = await api.request('/admin/departments');
+            if (res.success) {
+                const $dept = $('#departmentSelect');
+                $dept.empty().append('<option value="">Pilih Departemen...</option>');
+                res.data.forEach(d => {
+                    $dept.append(new Option(d.name, d.id));
+                });
+            }
+        } catch (e) {
+            console.error('Failed to load departments', e);
+        }
+    }
+
     function renderPositions(positions) {
         if (positions.length === 0) {
             tableBody.innerHTML = `<tr><td colspan="5" class="text-center py-5">Belum ada data jabatan.</td></tr>`;
@@ -48,9 +72,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         tableBody.innerHTML = positions.map(p => `
             <tr>
                 <td class="px-4 fw-bold text-dark">${p.name}</td>
-                <td><span class="badge bg-light text-dark">${p.department || '-'}</span></td>
                 <td>
-                    ${p.parent ? `<span class="fw-medium text-primary"><i class="ti ti-arrow-up-right me-1"></i>${p.parent.name}</span>` : '<span class="text-muted">Top Level</span>'}
+                    <span class="badge bg-light text-dark border">${p.department ? p.department.name : '-'}</span>
+                </td>
+                <td class="text-primary fw-medium">
+                    ${p.parent ? `<span class="fw-medium text-primary"><i class="ti ti-arrow-up-right me-1"></i>${p.parent.name}</span>` : '<span class="text-muted small">Top Level (CEO/Director)</span>'}
                 </td>
                 <td><div class="small fw-semibold">Level ${p.level}</div></td>
                 <td class="text-end px-4">
@@ -74,15 +100,17 @@ document.addEventListener('DOMContentLoaded', async () => {
                     positionIdInput.value = p.id;
                     modalTitle.innerText = 'Ubah Jabatan';
                     positionForm.querySelector('[name="name"]').value = p.name;
-                    positionForm.querySelector('[name="department"]').value = p.department || '';
                     positionForm.querySelector('[name="level"]').value = p.level;
-                    if (parentSelect) parentSelect.setValue(p.parent_id || '');
+                    
+                    setSelect2Value('#departmentSelect', p.department || '');
+                    setSelect2Value('#parentSelect', p.parent_id || '');
+                    
                     bsModal.show();
                 }
             });
         });
 
-        // Delete
+        // Delete (Simplified)
         tableBody.querySelectorAll('.delete-btn').forEach(btn => {
             btn.addEventListener('click', async () => {
                 const confirmed = await api.confirm({
@@ -110,11 +138,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     function updateParentOptions(positions) {
-        if (!parentSelect) return;
-        parentSelect.clearOptions();
-        parentSelect.addOption({ value: '', text: 'Tidak Ada (Top Level)' });
+        const $parent = $('#parentSelect');
+        $parent.empty().append('<option value="">Tidak Ada (Top Level)</option>');
         positions.forEach(p => {
-            parentSelect.addOption({ value: p.id, text: p.name });
+            $parent.append(new Option(p.name, p.id));
         });
     }
 
@@ -141,9 +168,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         positionForm.reset();
         positionIdInput.value = '';
         modalTitle.innerText = 'Tambah Jabatan Baru';
-        if (parentSelect) parentSelect.clear();
+        setSelect2Value('#departmentSelect', '');
+        setSelect2Value('#parentSelect', '');
     });
 
-    initParentSelect();
+    initSelects();
+    loadDepartments();
     fetchPositions();
 });

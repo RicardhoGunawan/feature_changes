@@ -3,7 +3,11 @@ const BASE_URL = window.location.origin + '/api';
 export const api = {
     async request(endpoint, options = {}) {
         const token = localStorage.getItem('session_token');
-        const headers = { 'Content-Type': 'application/json', ...options.headers };
+        const headers = { 
+            'Content-Type': 'application/json', 
+            'Accept': 'application/json',
+            ...options.headers 
+        };
         if (token) headers['Authorization'] = `Bearer ${token}`;
 
         try {

@@ -39,16 +39,10 @@ class AuthController extends Controller
         $token = $user->createToken('auth_token')->plainTextToken;
         $user->update(['last_login' => now()]);
 
-        $user = $user->load(['shift', 'location', 'roles']);
+        $user = $user->load(['shift', 'location', 'department', 'jobPosition']);
         
-        // Fail-safe: Get ALL permission names associated with all user's roles across all guards
-        $roleNames = $user->roles->pluck('name')->toArray();
-        $user->permissions = DB::table('permissions')
-            ->join('role_has_permissions', 'permissions.id', '=', 'role_has_permissions.permission_id')
-            ->join('roles', 'role_has_permissions.role_id', '=', 'roles.id')
-            ->whereIn('roles.name', $roleNames)
-            ->distinct()
-            ->pluck('permissions.name');
+        // Simplified permissions based on role
+        $user->permissions = $user->role === 'administrator' ? ['all'] : [];
 
         return response()->json([
             'success' => true,
@@ -63,7 +57,7 @@ class AuthController extends Controller
                     'email'                => $user->email,
                     'employee_id'          => $user->employee_code,
                     'employee_code'        => $user->employee_code,
-                    'department'           => $user->department,
+                    'department'           => $user->department?->name ?? '-',
                     'phone'                => $user->phone,
                     'address'              => $user->address,
                     'profile_photo'        => $user->profile_photo,
@@ -107,16 +101,8 @@ class AuthController extends Controller
 
     public function profile(Request $request)
     {
-        $user = $request->user()->load(['shift', 'location', 'roles']);
-        
-        // Fail-safe: Get ALL permission names associated with all user's roles across all guards
-        $roleNames = $user->roles->pluck('name')->toArray();
-        $user->permissions = DB::table('permissions')
-            ->join('role_has_permissions', 'permissions.id', '=', 'role_has_permissions.permission_id')
-            ->join('roles', 'role_has_permissions.role_id', '=', 'roles.id')
-            ->whereIn('roles.name', $roleNames)
-            ->distinct()
-            ->pluck('permissions.name');
+        $user = $request->user()->load(['shift', 'location', 'department', 'jobPosition']);
+        $user->permissions = $user->role === 'administrator' ? ['all'] : [];
 
         return response()->json([
             'success' => true,
@@ -142,16 +128,8 @@ class AuthController extends Controller
 
         $user->update($validated);
         
-        $user = $user->load(['shift', 'location', 'roles']);
-        
-        // Fail-safe: Get ALL permission names associated with all user's roles across all guards
-        $roleNames = $user->roles->pluck('name')->toArray();
-        $user->permissions = DB::table('permissions')
-            ->join('role_has_permissions', 'permissions.id', '=', 'role_has_permissions.permission_id')
-            ->join('roles', 'role_has_permissions.role_id', '=', 'roles.id')
-            ->whereIn('roles.name', $roleNames)
-            ->distinct()
-            ->pluck('permissions.name');
+        $user = $user->load(['shift', 'location', 'department', 'jobPosition']);
+        $user->permissions = $user->role === 'administrator' ? ['all'] : [];
 
         return response()->json([
             'success' => true,

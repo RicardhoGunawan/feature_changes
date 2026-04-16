@@ -13,120 +13,65 @@ document.addEventListener('DOMContentLoaded', async () => {
     const bsModal = new bootstrap.Modal(modalEl);
 
     let allEmployees = [];
-    let supervisorSelect;
     let shiftSelect;
     let locationSelect;
     let positionSelect;
 
-    // Initialize Tom Selects
+    // Initialize Select2
     function initSelects() {
-        if (supervisorSelect) supervisorSelect.destroy();
-        if (shiftSelect) shiftSelect.destroy();
-        if (locationSelect) locationSelect.destroy();
-        if (positionSelect) positionSelect.destroy();
+        $('#shiftSelect').select2({
+            theme: 'bootstrap-5',
+            dropdownParent: $('#addEmployeeModal'),
+            width: '100%',
+            placeholder: 'Pilih Shift...'
+        });
 
-        const supEl = document.querySelector('#supervisorSelect');
-        if (supEl) {
-            supervisorSelect = new TomSelect('#supervisorSelect', {
-                create: false,
-                sortField: { field: 'text', order: 'asc' },
-                placeholder: 'Pilih Atasan...',
-                allowEmptyOption: true
-            });
-        }
+        $('#locationSelect').select2({
+            theme: 'bootstrap-5',
+            dropdownParent: $('#addEmployeeModal'),
+            width: '100%',
+            placeholder: 'Pilih Lokasi...'
+        });
 
-        const shiftEl = document.querySelector('#shiftSelect');
-        if (shiftEl) {
-            shiftSelect = new TomSelect('#shiftSelect', {
-                create: false,
-                sortField: { field: 'text', order: 'asc' },
-                placeholder: 'Pilih Shift...',
-                allowEmptyOption: true
-            });
-        }
+        $('#positionSelect').select2({
+            theme: 'bootstrap-5',
+            dropdownParent: $('#addEmployeeModal'),
+            width: '100%',
+            placeholder: 'Pilih Jabatan...'
+        });
+    }
 
-        const locEl = document.querySelector('#locationSelect');
-        if (locEl) {
-            locationSelect = new TomSelect('#locationSelect', {
-                create: false,
-                sortField: { field: 'text', order: 'asc' },
-                placeholder: 'Pilih Lokasi...',
-                allowEmptyOption: true
-            });
-        }
-
-        const posEl = document.querySelector('#positionSelect');
-        if (posEl) {
-            positionSelect = new TomSelect('#positionSelect', {
-                create: false,
-                sortField: { field: 'text', order: 'asc' },
-                placeholder: 'Pilih Jabatan...',
-                allowEmptyOption: true
-            });
-        }
+    // Shortcut for Select2 change trigger
+    function setSelect2Value(selector, value) {
+        $(selector).val(value).trigger('change');
     }
 
     async function loadDropdownData() {
         try {
-            // Load Supervisors
-            if (supervisorSelect) {
-                const resSup = await api.request('/admin/employees?mode=supervisors');
-                if (resSup.success) {
-                    supervisorSelect.clearOptions();
-                    supervisorSelect.addOption({ value: '', text: 'Tanpa Atasan' });
-                    resSup.data.forEach(s => {
-                        supervisorSelect.addOption({
-                            value: s.id,
-                            text: `${s.name} (${s.employee_id}) - ${s.role.toUpperCase()}`
-                        });
-                    });
-                }
-            }
-
             // Load Positions
-            if (positionSelect) {
-                const resPos = await api.request('/admin/positions');
-                if (resPos.success) {
-                    positionSelect.clearOptions();
-                    positionSelect.addOption({ value: '', text: 'Pilih Jabatan...' });
-                    resPos.data.forEach(p => {
-                        positionSelect.addOption({
-                            value: p.id,
-                            text: p.name
-                        });
-                    });
-                }
+            const resPos = await api.request('/admin/positions');
+            if (resPos.success) {
+                const $pos = $('#positionSelect');
+                $pos.empty().append('<option value="">Pilih Jabatan...</option>');
+                resPos.data.forEach(p => { $pos.append(new Option(p.name, p.id)); });
             }
 
             // Load Shifts
-            if (shiftSelect) {
-                const resShift = await api.request('/admin/schedules');
-                if (resShift.success) {
-                    shiftSelect.clearOptions();
-                    shiftSelect.addOption({ value: '', text: 'Pilih Shift...' });
-                    resShift.data.forEach(s => {
-                        shiftSelect.addOption({
-                            value: s.id,
-                            text: `${s.shift_name} (${s.start_time} - ${s.end_time})`
-                        });
-                    });
-                }
+            const resShift = await api.request('/admin/schedules');
+            if (resShift.success) {
+                const $shift = $('#shiftSelect');
+                $shift.empty().append('<option value="">Pilih Shift...</option>');
+                resShift.data.forEach(s => { $shift.append(new Option(`${s.shift_name} (${s.start_time} - ${s.end_time})`, s.id)); });
             }
 
             // Load Locations
-            if (locationSelect) {
-                const resLoc = await api.request('/admin/locations');
-                if (resLoc.success) {
-                    locationSelect.clearOptions();
-                    locationSelect.addOption({ value: '', text: 'Pilih Lokasi...' });
-                    resLoc.data.forEach(l => {
-                        locationSelect.addOption({
-                            value: l.id,
-                            text: `${l.location_name} (${l.radius}m)`
-                        });
-                    });
-                }
+            const resLoc = await api.request('/admin/locations');
+            if (resLoc.success) {
+                const $loc = $('#locationSelect');
+                $loc.empty().append('<option value="">Pilih Lokasi...</option>');
+                resLoc.data.forEach(l => { $loc.append(new Option(`${l.location_name} (${l.radius}m)`, l.id)); });
             }
+
         } catch (e) {
             console.error('Failed to load dropdown data', e);
         }
@@ -134,7 +79,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     async function loadEmployees() {
         if (!tableBody) return;
-        tableBody.innerHTML = `<tr><td colspan="7" class="text-center py-5"><div class="spinner-border text-primary"></div></td></tr>`;
+        tableBody.innerHTML = `<tr><td colspan="6" class="text-center py-5"><div class="spinner-border text-primary"></div></td></tr>`;
         try {
             const response = await api.getEmployees();
             if (response.success) {
@@ -142,13 +87,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                 renderEmployees(allEmployees);
             }
         } catch (error) {
-            tableBody.innerHTML = `<tr><td colspan="7" class="text-center py-5 text-danger">${error.message}</td></tr>`;
+            tableBody.innerHTML = `<tr><td colspan="6" class="text-center py-5 text-danger">${error.message}</td></tr>`;
         }
     }
 
     function renderEmployees(employees) {
         if (!employees || employees.length === 0) {
-            tableBody.innerHTML = `<tr><td colspan="7" class="text-center py-5">Tidak ada data karyawan.</td></tr>`;
+            tableBody.innerHTML = `<tr><td colspan="6" class="text-center py-5">Tidak ada data karyawan.</td></tr>`;
             return;
         }
 
@@ -157,10 +102,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         tableBody.innerHTML = filteredEmployees.map(emp => {
             let badgeHtml = '';
-            if (emp.role === 'spv') {
-                badgeHtml = `<span class="badge bg-info text-white rounded-pill" style="font-size: 9px; padding: 2px 8px;">SPV</span>`;
-            } else if (emp.role === 'hr') {
-                badgeHtml = `<span class="badge bg-warning text-white rounded-pill" style="font-size: 9px; padding: 2px 8px;">HR</span>`;
+            if (emp.role === 'administrator') {
+                badgeHtml = `<span class="badge bg-primary text-white rounded-pill" style="font-size: 9px; padding: 2px 8px;">ADMINISTRATOR</span>`;
             } else {
                 badgeHtml = `<span class="badge bg-secondary bg-opacity-10 text-secondary rounded-pill" style="font-size: 9px; padding: 2px 8px;">EMPLOYEE</span>`;
             }
@@ -184,9 +127,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <td>
                         <div class="small text-dark fw-medium">${emp.position || '-'}</div>
                         <div class="text-muted small">${emp.department || '-'}</div>
-                    </td>
-                    <td>
-                        <div class="small fw-semibold text-primary">${emp.supervisor_name || '<span class="text-muted">-</span>'}</div>
                     </td>
                     <td>
                         <div class="small text-dark fw-medium">${emp.shift_name || '-'}</div>
@@ -225,24 +165,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                     employeeForm.querySelector('[name="name"]').value = emp.name;
                     employeeForm.querySelector('[name="email"]').value = emp.email || '';
                     employeeForm.querySelector('[name="phone"]').value = emp.phone || '';
-                    employeeForm.querySelector('[name="department"]').value = emp.department || '';
+                    
                     employeeForm.querySelector('[name="role"]').value = emp.role;
                     
                     employeeForm.querySelector('[name="password"]').required = false; 
                     employeeForm.querySelector('[name="password"]').placeholder = '(Kosongkan jika tidak diubah)';
                     
-                    if (supervisorSelect) {
-                        supervisorSelect.setValue(emp.supervisor_id || '');
-                    }
-                    if (shiftSelect) {
-                        shiftSelect.setValue(emp.shift_id || '');
-                    }
-                    if (locationSelect) {
-                        locationSelect.setValue(emp.location_id || '');
-                    }
-                    if (positionSelect) {
-                        positionSelect.setValue(emp.position_id || '');
-                    }
+                    setSelect2Value('#shiftSelect', emp.shift_id || '');
+                    setSelect2Value('#locationSelect', emp.location_id || '');
+                    setSelect2Value('#positionSelect', emp.position_id || '');
                     
                     bsModal.show();
                 }
@@ -285,10 +216,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         modalTitle.innerText = 'Tambah Karyawan Baru';
         employeeForm.querySelector('[name="password"]').required = true;
         employeeForm.querySelector('[name="password"]').placeholder = '******';
-        if (supervisorSelect) supervisorSelect.clear();
-        if (shiftSelect) shiftSelect.clear();
-        if (locationSelect) locationSelect.clear();
-        if (positionSelect) positionSelect.clear();
+        
+        setSelect2Value('#shiftSelect', '');
+        setSelect2Value('#locationSelect', '');
+        setSelect2Value('#positionSelect', '');
     });
 
     // Search

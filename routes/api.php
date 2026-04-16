@@ -14,9 +14,10 @@ use App\Http\Controllers\Api\Admin\LeaveController as AdminLeaveController;
 use App\Http\Controllers\Api\Admin\ScheduleController;
 use App\Http\Controllers\Api\Admin\HolidayController;
 use App\Http\Controllers\Api\Admin\PositionController;
-use App\Http\Controllers\Api\Admin\RoleController;
+use App\Http\Controllers\Api\Admin\DepartmentController;
 
-Route::post('/auth/login', [AuthController::class, 'login']);
+
+Route::post('/auth/login', [AuthController::class, 'login'])->name('login');
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/auth/logout', [AuthController::class, 'logout']);
@@ -76,9 +77,12 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/positions', [PositionController::class, 'store']);
         Route::delete('/positions', [PositionController::class, 'destroy']);
 
-        // Role & Access Management
-        Route::get('/roles', [RoleController::class, 'index']);
-        Route::post('/roles', [RoleController::class, 'updatePermissions']);
+        // Department Management
+        Route::get('/departments', [DepartmentController::class, 'index']);
+        Route::post('/departments', [DepartmentController::class, 'store']);
+        Route::delete('/departments', [DepartmentController::class, 'destroy']);
+
+
     });
 
     // ── Approval Routes (Any authenticated user with approver position) ─────────

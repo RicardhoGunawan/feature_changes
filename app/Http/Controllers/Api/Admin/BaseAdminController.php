@@ -17,7 +17,7 @@ class BaseAdminController extends Controller
         $user = $request->user();
 
         // Administrators have all access
-        if ($user->role === 'administrator' || $user->hasRole('administrator')) {
+        if ($user->role === 'administrator') {
             return true;
         }
 
@@ -40,7 +40,7 @@ class BaseAdminController extends Controller
         $approver = $request->user();
 
         // Administrators can always approve
-        if ($approver->role === 'administrator' || $approver->hasRole('administrator')) {
+        if ($approver->role === 'administrator') {
             return true;
         }
 
@@ -49,7 +49,7 @@ class BaseAdminController extends Controller
             return false;
         }
 
-        $requesterPosition = $requesterUser->position;
+        $requesterPosition = $requesterUser->jobPosition;
         if (!$requesterPosition) {
             return false;
         }
