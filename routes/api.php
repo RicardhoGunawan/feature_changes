@@ -38,10 +38,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/overtime/apply', [OvertimeController::class, 'store']);
     Route::get('/overtime/history', [OvertimeController::class, 'history']);
 
-    // Admin Routes
-    Route::middleware('role:admin,spv,hr')->prefix('admin')->group(function () {
+    // ── Admin Routes (Administrator only) ──────────────────────────────────────
+    // Approval access is NOT determined here. It is handled in LeaveController
+    // via Position hierarchy. Any employee with a parent position can approve.
+    Route::middleware('role:administrator')->prefix('admin')->group(function () {
         Route::get('/dashboard', [DashboardController::class, 'index']);
-        
+
         // Employee Management
         Route::get('/employees', [AdminEmployeeController::class, 'index']);
         Route::post('/employees', [AdminEmployeeController::class, 'store']);
@@ -68,15 +70,23 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/holidays', [HolidayController::class, 'index']);
         Route::post('/holidays', [HolidayController::class, 'store']);
         Route::delete('/holidays', [HolidayController::class, 'destroy']);
-        
+
         // Positions Management
         Route::get('/positions', [PositionController::class, 'index']);
         Route::post('/positions', [PositionController::class, 'store']);
         Route::delete('/positions', [PositionController::class, 'destroy']);
-        
+
         // Role & Access Management
         Route::get('/roles', [RoleController::class, 'index']);
         Route::post('/roles', [RoleController::class, 'updatePermissions']);
+    });
+
+    // ── Approval Routes (Any authenticated user with approver position) ─────────
+    // These are separated so employees with approver positions can access them
+    // without needing full administrator access.
+    Route::prefix('admin')->group(function () {
+        Route::get('/leave', [AdminLeaveController::class, 'index']);
+        Route::patch('/leave/approve', [AdminLeaveController::class, 'approve']);
     });
 });
 

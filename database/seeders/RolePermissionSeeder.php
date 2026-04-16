@@ -9,31 +9,61 @@ use Spatie\Permission\Models\Permission;
 
 class RolePermissionSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
         // Reset cached roles and permissions
         app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
 
-        // Create Roles
-        $roles = ['admin', 'spv', 'hr', 'employee'];
+        // ── Create 2 New Simplified Roles ────────────────────────────────────────
+        $roles = ['administrator', 'employee'];
+
         foreach ($roles as $roleName) {
             Role::firstOrCreate(['name' => $roleName, 'guard_name' => 'web']);
             Role::firstOrCreate(['name' => $roleName, 'guard_name' => 'api']);
         }
 
-        // Migrate existing users' roles
+        // ── Permissions (unchanged, still granular) ───────────────────────────────
+        // Only administrators get these. They are checked in BaseAdminController.
+        $permissions = [
+            'view_dashboard',
+            'view_attendance',
+            'manage_attendance',
+            'view_leave',
+            'approve_leave',         // Generic approval - now position-based in logic
+            'view_employee',
+            'manage_employee',
+            'manage_location',
+            'manage_schedule',
+            'view_roles',
+            'manage_roles',
+            'view_positions',
+            'manage_positions',
+        ];
+
+        foreach ($permissions as $perm) {
+            Permission::firstOrCreate(['name' => $perm, 'guard_name' => 'web']);
+            Permission::firstOrCreate(['name' => $perm, 'guard_name' => 'api']);
+        }
+
+        // ── Assign all permissions to administrator ───────────────────────────────
+        $adminRole = Role::where('name', 'administrator')->where('guard_name', 'api')->first();
+        if ($adminRole) {
+            $adminRole->syncPermissions(Permission::where('guard_name', 'api')->get());
+        }
+
+        // ── Migrate existing users to new roles ───────────────────────────────────
         $users = User::all();
         foreach ($users as $user) {
-            // Get original role from column (handling if it's already there)
-            $oldRole = $user->getAttributes()['role'] ?? null;
-            
-            if ($oldRole && in_array($oldRole, $roles)) {
-                // Assign role via Spatie (supports both web and api guards if configured)
-                $user->assignRole($oldRole);
+            $rawRole = $user->getAttributes()['role'] ?? 'employee';
+
+            // Map old roles → new roles
+            if (in_array($rawRole, ['admin', 'administrator'])) {
+                $newRole = 'administrator';
+            } else {
+                $newRole = 'employee';
             }
+
+            $user->syncRoles([$newRole]);
         }
     }
 }

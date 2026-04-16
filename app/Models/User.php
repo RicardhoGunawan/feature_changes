@@ -113,29 +113,31 @@ class User extends Authenticatable
         );
     }
 
-    public function position(): BelongsTo
+    public function jobPosition(): BelongsTo
     {
         return $this->belongsTo(Position::class, 'position_id');
     }
 
-    /**
-     * Get the dynamic supervisor based on position hierarchy (Position-based approval)
-     * Fallback to supervisor_id if no position is set
-     */
     public function getReportingManager()
     {
         if ($this->position_id) {
-            $currentPosition = $this->position;
+            $currentPosition = $this->jobPosition;
             
             while ($currentPosition && $currentPosition->parent_id) {
                 $parentPosition = $currentPosition->parent;
-                $approver = $parentPosition->users()->where('is_active', true)->first();
+                $approver = $parentPosition->users()
+                    ->where('is_active', true)
+                    ->where('department', $this->department) // Ensure same department for SPV/Manager level
+                    ->first();
+                
+                // If special case (e.g. Director overseeing all), you might want to relax department check
+                // for top-level positions, but let's follow user's strict request first.
                 
                 if ($approver) {
                     return $approver;
                 }
                 
-                // If vacant, climb higher
+                // If vacant or wrong department, climb higher
                 $currentPosition = $parentPosition;
             }
         }
@@ -143,6 +145,8 @@ class User extends Authenticatable
         // Fallback to legacy static supervisor if set
         return $this->supervisor;
     }
+
+
 
     public function shift(): BelongsTo
     {

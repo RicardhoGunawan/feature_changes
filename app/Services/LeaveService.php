@@ -47,11 +47,11 @@ class LeaveService
 
         // 1. Check for pending requests
         $pending = LeaveRequest::where('user_id', $user->id)
-            ->whereIn('status', ['pending_spv', 'pending_hr'])
+            ->whereIn('status', ['pending_spv', 'pending_hr', 'pending_approval'])
             ->exists();
 
         if ($pending) {
-            throw new Exception('Anda masih memiliki pengajuan yang pending.');
+            throw new Exception('Anda masih memiliki pengajuan yang sedang menunggu persetujuan.');
         }
 
         // 2. Check for overlapping dates

@@ -54,9 +54,43 @@ class AuthController extends Controller
             'success' => true,
             'message' => 'Login successful',
             'data' => [
-                'user' => $user,
-                'token' => $token,
-                'token_type' => 'Bearer',
+                'access_token' => $token,
+                'token_type'   => 'Bearer',
+                'user' => [
+                    'id'                   => $user->id,
+                    'name'                 => $user->name,
+                    'username'             => $user->username,
+                    'email'                => $user->email,
+                    'employee_id'          => $user->employee_code,
+                    'employee_code'        => $user->employee_code,
+                    'department'           => $user->department,
+                    'phone'                => $user->phone,
+                    'address'              => $user->address,
+                    'profile_photo'        => $user->profile_photo,
+                    'remaining_leave'      => $user->remaining_leave,
+                    'sick_leave_remaining' => $user->sick_leave_remaining,
+                    // ── New 2-role system ────────────────────────────────────
+                    'role'         => $user->role,          // 'administrator' or 'employee'
+                    'current_role' => $user->current_role,  // From Spatie roles
+                    'is_admin'     => ($user->role === 'administrator'),
+                    // ── Position info (for approval hierarchy display) ────────
+                    'position'    => $user->jobPosition()->first()?->name ?? $user->position ?? null,
+                    'position_id' => $user->position_id,
+                    // ── Shift & Location ─────────────────────────────────────
+                    'work_schedule' => $user->shift ? [
+                        'shift_name'  => $user->shift->name,
+                        'start_time'  => $user->shift->start_time,
+                        'end_time'    => $user->shift->end_time,
+                    ] : null,
+                    'office_location' => $user->location ? [
+                        'id'        => $user->location->id,
+                        'name'      => $user->location->name,
+                        'latitude'  => $user->location->latitude,
+                        'longitude' => $user->location->longitude,
+                        'radius'    => $user->location->radius,
+                    ] : null,
+                    'permissions' => $user->permissions,
+                ],
             ]
         ]);
     }
