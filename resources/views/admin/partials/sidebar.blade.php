@@ -46,9 +46,38 @@
         </li>
 
         <li class="nav-item" data-role="administrator,employee">
-            <a class="nav-link {{ Request::is('admin/leave*') ? 'active' : '' }}" href="{{ url('/admin/leave') }}">
+            <a class="nav-link {{ Request::is('admin/leave') ? 'active' : '' }}" href="{{ url('/admin/leave') }}">
                 <i class="ti ti-mail"></i>
                 <span class="nav-text">Izin & Cuti</span>
+            </a>
+        </li>
+
+        <li class="px-4 py-2 mt-2 sidebar-label" data-role="administrator">
+            <small class="text-secondary text-uppercase fw-bold"
+                style="font-size: 10px; letter-spacing: 1px;">HR Engine</small>
+        </li>
+
+        <li class="nav-item" data-role="administrator">
+            <a class="nav-link {{ Request::is('admin/leave-policies*') ? 'active' : '' }}"
+                href="{{ url('/admin/leave-policies') }}">
+                <i class="ti ti-settings-automation"></i>
+                <span class="nav-text">Kebijakan Cuti</span>
+            </a>
+        </li>
+
+        <li class="nav-item" data-role="administrator">
+            <a class="nav-link {{ Request::is('admin/approval-workflows*') ? 'active' : '' }}"
+                href="{{ url('/admin/approval-workflows') }}">
+                <i class="ti ti-git-merge"></i>
+                <span class="nav-text">Alur Persetujuan</span>
+            </a>
+        </li>
+
+        <li class="nav-item" data-role="administrator">
+            <a class="nav-link {{ Request::is('admin/audit-logs*') ? 'active' : '' }}"
+                href="{{ url('/admin/audit-logs') }}">
+                <i class="ti ti-history"></i>
+                <span class="nav-text">Riwayat Audit</span>
             </a>
         </li>
 

@@ -284,6 +284,23 @@ document.addEventListener('DOMContentLoaded', () => {
                         <span>${reg.status.includes('rejected') || reg.status === 'approved' ? 'Pengajuan ini sudah selesai diproses.' : 'Menunggu antrian verifikasi role selanjutnya.'}</span>
                     </div>
                 `}
+
+                ${userRole === 'administrator' && !['approved', 'rejected'].includes(reg.status) ? `
+                    <div class="mt-4 border-top pt-4 border-danger border-opacity-25 bg-danger-subtle bg-opacity-10 p-3 rounded-2">
+                        <label class="text-danger x-small text-uppercase fw-bold mb-2 d-block" style="font-size: 10px;">
+                            <i class="ti ti-shield-lock"></i> Administrative Override
+                        </label>
+                        <p class="x-small text-secondary mb-3">Admin dapat memotong antrean persetujuan dan langsung memutuskan secara final.</p>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-outline-success btn-sm flex-grow-1 fw-bold" onclick="forceActionFromModal('${reg.id}', 'approve')">
+                                Force Approve
+                            </button>
+                            <button class="btn btn-outline-danger btn-sm flex-grow-1 fw-bold" onclick="forceActionFromModal('${reg.id}', 'reject')">
+                                Force Reject
+                            </button>
+                        </div>
+                    </div>
+                ` : ''}
             </div>
         `;
         const modal = new bootstrap.Modal(document.getElementById('detailLeaveModal'));
@@ -312,6 +329,69 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // Proxy Submission Logic
+    const proxyModal = document.getElementById('createLeaveModal');
+    if (proxyModal) {
+        proxyModal.addEventListener('show.bs.modal', async () => {
+            // Load Employees
+            const empRes = await api.getEmployees();
+            if (empRes.success) {
+                const select = document.getElementById('proxyEmployeeSelect');
+                select.innerHTML = empRes.data.map(e => `<option value="${e.id}">${e.name} (${e.employee_id || '-'})</option>`).join('');
+            }
+            // Load Leave Types
+            const typeRes = await api.request('/leave/types');
+            if (typeRes.success) {
+                const select = document.getElementById('proxyLeaveTypeSelect');
+                select.innerHTML = typeRes.data.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
+            }
+        });
+
+        const proxyForm = document.getElementById('proxyLeaveForm');
+        proxyForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const data = Object.fromEntries(new FormData(proxyForm));
+            try {
+                const res = await api.request('/admin/leave/proxy', {
+                    method: 'POST',
+                    body: JSON.stringify(data)
+                });
+                if (res.success) {
+                    api.notify(res.message);
+                    bootstrap.Modal.getInstance(proxyModal).hide();
+                    proxyForm.reset();
+                    fetchLeaves(monthInput.value);
+                }
+            } catch (err) { api.notify(err.message, 'danger'); }
+        });
+    }
+
+    // Force action for administrator
+    window.forceActionFromModal = async (id, action) => {
+        const note = prompt("Masukkan alasan pengambilalihan (Force Action):", "Override by Admin");
+        if (note === null) return; // Cancelled
+
+        try {
+            const response = await api.request(`/admin/leave/${id}/force-action`, {
+                method: 'PATCH',
+                body: JSON.stringify({
+                    action: action,
+                    note: note
+                })
+            });
+
+            if (response.success) {
+                api.notify('Force action berhasil dilakukan', 'success');
+                const modalEl = document.getElementById('detailLeaveModal');
+                const modal = bootstrap.Modal.getInstance(modalEl);
+                if (modal) modal.hide();
+                setTimeout(() => fetchLeaves(monthInput.value), 500);
+            }
+        } catch (error) {
+            api.notify(error.message, 'danger');
+        }
+    };
+
     // New integrated processor
     window.processFromModal = async (id, action) => {
         const note = document.getElementById('modalReviewNote').value;
@@ -332,7 +412,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             if (response.success) {
-                api.notify(action === 'approve' ? 'Berhasil diproses' : 'Pengajuan ditolak');
+                api.notify(response.message); // Show backend message (e.g. "Diteruskan ke tahap berikutnya")
                 const modalEl = document.getElementById('detailLeaveModal');
                 const modal = bootstrap.Modal.getInstance(modalEl);
                 if (modal) modal.hide();

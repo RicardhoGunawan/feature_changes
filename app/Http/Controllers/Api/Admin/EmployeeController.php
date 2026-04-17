@@ -32,12 +32,12 @@ class EmployeeController extends BaseAdminController
                 'id' => $e->id,
                 'name' => $e->name,
                 'username' => $e->username,
-                'employee_id' => $e->employee_code,
+                'employee_code' => $e->employee_code,
                 'email' => $e->email,
                 'phone' => $e->phone,
-                'position' => $e->jobPosition?->name ?? 'Karyawan',
+                'position_name' => $e->jobPosition?->name ?? '-',
                 'position_id' => $e->position_id,
-                'department' => $e->department?->name ?? '-',
+                'department_name' => $e->department?->name ?? '-',
                 'department_id' => $e->department_id,
                 'role' => $e->role,
                 'is_active' => $e->is_active,
@@ -46,6 +46,9 @@ class EmployeeController extends BaseAdminController
                 'work_hours' => $e->shift ? substr($e->shift->start_time, 0, 5) . ' - ' . substr($e->shift->end_time, 0, 5) : '-',
                 'location_id' => $e->location_id,
                 'profile_photo' => $e->profile_photo,
+                'join_date' => $e->join_date ? $e->join_date->format('Y-m-d') : null,
+                'employee_type' => $e->employee_type,
+                'remaining_leave' => $e->remaining_leave,
             ];
         });
 
@@ -68,6 +71,9 @@ class EmployeeController extends BaseAdminController
             'shift_id' => 'nullable|exists:shifts,id',
             'location_id' => 'nullable|exists:office_locations,id',
             'password' => $id ? 'nullable|min:6' : 'required|min:6',
+            'join_date' => 'nullable|date',
+            'employee_type' => 'nullable|in:permanent,contract,probation',
+            'annual_leave_quota' => 'nullable|integer',
         ]);
 
         if (isset($validated['position_id'])) {
@@ -75,6 +81,12 @@ class EmployeeController extends BaseAdminController
             if ($pos) {
                 $validated['department_id'] = $pos->department_id;
             }
+        }
+
+        // Map initial quota to remaining_leave if provided
+        if (isset($validated['annual_leave_quota'])) {
+            $validated['remaining_leave'] = $validated['annual_leave_quota'];
+            unset($validated['annual_leave_quota']);
         }
 
         if ($id) {
@@ -87,7 +99,7 @@ class EmployeeController extends BaseAdminController
             $user->update($validated);
         } else {
             $validated['password'] = Hash::make($validated['password']);
-            $validated['employee_code'] = $request->get('employee_id') ?: 'EMP-' . strtoupper(Str::random(6));
+            $validated['employee_code'] = $request->get('employee_code') ?: 'EMP-' . strtoupper(Str::random(6));
             $user = User::create($validated);
         }
 
@@ -102,11 +114,38 @@ class EmployeeController extends BaseAdminController
         return response()->json(['success' => true, 'message' => 'Karyawan berhasil dihapus']);
     }
 
-    public function updateStatus(Request $request, User $user)
+    /**
+     * Adjust employee leave quota manually.
+     */
+    public function adjustQuota(Request $request, User $user)
     {
         $this->validatePermission($request, 'manage_employee');
-        $request->validate(['is_active' => 'required|boolean']);
-        $user->update(['is_active' => $request->is_active]);
-        return response()->json(['success' => true, 'message' => 'Status user berhasil diperbarui']);
+        
+        $data = $request->validate([
+            'type' => 'required|in:annual,sick',
+            'amount' => 'required|integer', // Can be negative
+            'reason' => 'required|string',
+        ]);
+
+        $oldValue = $data['type'] === 'annual' ? $user->remaining_leave : $user->sick_leave_remaining;
+        
+        if ($data['type'] === 'annual') {
+            $user->increment('remaining_leave', $data['amount']);
+        } else {
+            $user->increment('sick_leave_remaining', $data['amount']);
+        }
+
+        $newValue = $data['type'] === 'annual' ? $user->remaining_leave : $user->sick_leave_remaining;
+
+        // Audit Log (Requirement #10)
+        \App\Services\AuditService::log(
+            'quota_adjustment', 
+            $user, 
+            ['remaining_leave' => $oldValue], 
+            ['remaining_leave' => $newValue, 'reason' => $data['reason']], 
+            $user->id
+        );
+
+        return response()->json(['success' => true, 'message' => 'Kuota berhasil disesuaikan.']);
     }
 }

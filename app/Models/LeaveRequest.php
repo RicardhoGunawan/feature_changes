@@ -12,7 +12,7 @@ class LeaveRequest extends Model
 
     protected $fillable = [
         'user_id',
-        'type',
+        'leave_type_id',
         'leave_duration_type',
         'half_day_session',
         'start_date',
@@ -24,6 +24,7 @@ class LeaveRequest extends Model
         'remaining_leave_at_req',
         'sick_leave_at_req',
         'status',
+        'current_step',
         'spv_reviewed_at',
         'reviewed_at',
         'spv_reviewed_by',
@@ -82,5 +83,10 @@ class LeaveRequest extends Model
     public function hr(): BelongsTo
     {
         return $this->belongsTo(User::class, 'reviewed_by');
+    }
+
+    public function leaveType(): BelongsTo
+    {
+        return $this->belongsTo(LeaveType::class, 'leave_type_id');
     }
 }

@@ -15,6 +15,9 @@
         <p class="text-secondary small">Review dan kelola pengajuan izin karyawan.</p>
     </div>
     <div class="col-sm-6 text-sm-end">
+        <button type="button" class="btn btn-primary shadow-sm me-2" data-bs-toggle="modal" data-bs-target="#createLeaveModal">
+            <i class="ti ti-plus me-1"></i> Input Cuti (Proxy)
+        </button>
         <button type="button" id="exportLeaveBtn" class="btn btn-success shadow-sm">
             <i class="ti ti-file-spreadsheet me-1"></i> Export Excel
         </button>
@@ -137,6 +140,56 @@
                     <div class="text-end border-top pt-3 mt-4">
                         <button type="button" class="btn btn-light px-4 me-2" data-bs-dismiss="modal">Batal</button>
                         <button type="submit" id="submitProcessBtn" class="btn btn-primary px-4">Konfirmasi</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Input Cuti (Proxy) -->
+<div class="modal fade" id="createLeaveModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header border-bottom shadow-none">
+                <h5 class="modal-title fw-bold">Input Cuti Karyawan (Proxy)</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form id="proxyLeaveForm">
+                    <div class="row g-3">
+                        <div class="col-md-12">
+                            <label class="form-label small fw-semibold">Pilih Karyawan</label>
+                            <select name="user_id" id="proxyEmployeeSelect" class="form-select" required></select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Jenis Izin/Cuti</label>
+                            <select name="leave_type_id" id="proxyLeaveTypeSelect" class="form-select" required></select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Durasi</label>
+                            <select name="duration_type" id="proxyDurationSelect" class="form-select">
+                                <option value="full_day">Hari Penuh</option>
+                                <option value="half_day">Setengah Hari</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Tanggal Mulai</label>
+                            <input type="date" name="start_date" class="form-control" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Tanggal Selesai</label>
+                            <input type="date" name="end_date" class="form-control" required>
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label small fw-semibold">Alasan</label>
+                            <textarea name="reason" class="form-control" rows="3" placeholder="Contoh: Keperluan keluarga mendesak" required></textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="text-end border-top pt-3 mt-4">
+                        <button type="button" class="btn btn-light px-4 me-2" data-bs-dismiss="modal">Batal</button>
+                        <button type="submit" class="btn btn-primary px-4 fw-bold">Kirim Pengajuan</button>
                     </div>
                 </form>
             </div>

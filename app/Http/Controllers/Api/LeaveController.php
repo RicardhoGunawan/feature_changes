@@ -14,10 +14,26 @@ class LeaveController extends Controller
     {
         $this->leaveService = $leaveService;
     }
+    /**
+     * Get available leave types for the picker.
+     */
+    public function types()
+    {
+        $types = \App\Models\LeaveType::where('is_active', true)
+            ->with('policy')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $types
+        ]);
+    }
+
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'type' => 'required|in:sakit,cuti,keperluan,keluarga,duka,lain',
+            'leave_type_code' => 'required|exists:leave_types,code', // New system uses code
+            'type' => 'nullable', // Keep for legacy
             'leave_duration_type' => 'nullable|in:full_day,half_day',
             'half_day_session' => 'nullable|required_if:leave_duration_type,half_day|in:morning,afternoon',
             'start_date' => 'required|date|after_or_equal:today',
@@ -26,7 +42,7 @@ class LeaveController extends Controller
             'attachment' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
         ]);
 
-        // Default to full_day if not provided
+        // Default type if not provided
         $validated['leave_duration_type'] = $validated['leave_duration_type'] ?? 'full_day';
 
         try {

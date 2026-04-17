@@ -12,7 +12,10 @@ class Department extends Model
     protected $fillable = [
         'name',
         'code',
-        'description'
+        'description',
+        'leave_workflow_id',
+        'max_concurrent_leave',
+        'leave_policy_notes'
     ];
 
     public function users()

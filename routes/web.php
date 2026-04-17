@@ -23,5 +23,8 @@ Route::prefix('admin')->group(function () {
     Route::get('/locations', [AdminViewController::class, 'locations']);
     Route::get('/schedules', [AdminViewController::class, 'schedules']);
     Route::get('/holidays', [AdminViewController::class, 'holidays']);
+    Route::get('/leave-policies', [AdminViewController::class, 'leavePolicies']);
+    Route::get('/approval-workflows', [AdminViewController::class, 'approvalWorkflows']);
+    Route::get('/audit-logs', [AdminViewController::class, 'auditLogs']);
 
 });

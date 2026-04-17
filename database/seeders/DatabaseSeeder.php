@@ -12,8 +12,11 @@ class DatabaseSeeder extends Seeder
             // 1. Roles & Permissions (must run first)
             RolePermissionSeeder::class,
             // 2. Master Data
+            MasterLeaveSeeder::class,
+            ApprovalWorkflowSeeder::class,
             MasterDataSeeder::class,
             DepartmentSeeder::class,
+            DepartmentConstraintSeeder::class,
             // 3. Users
             UserSeeder::class,
             // 4. Dummy Data

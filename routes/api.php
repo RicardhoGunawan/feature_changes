@@ -32,7 +32,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/attendance/history', [AttendanceController::class, 'history']);
     
     // Leave
-    Route::post('/leave/apply', [LeaveController::class, 'store']);
+    Route::get('/leave/types', [LeaveController::class, 'types']);
+    Route::post('/leave/store', [LeaveController::class, 'store']);
     Route::get('/leave/history', [LeaveController::class, 'history']);
     
     // Overtime
@@ -82,7 +83,20 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/departments', [DepartmentController::class, 'store']);
         Route::delete('/departments', [DepartmentController::class, 'destroy']);
 
+        // HR Engine Management
+        Route::get('/leave-policies', [AdminLeaveController::class, 'getPolicies']);
+        Route::post('/leave-policies', [AdminLeaveController::class, 'storePolicy']);
+        Route::get('/approval-workflows', [AdminLeaveController::class, 'getWorkflows']);
+        Route::get('/approval-workflows/{id}', [AdminLeaveController::class, 'showWorkflow']);
+        Route::post('/approval-workflows', [AdminLeaveController::class, 'storeWorkflow']);
+        Route::put('/approval-workflows/{id}', [AdminLeaveController::class, 'updateWorkflow']);
+        Route::delete('/approval-workflows/{id}', [AdminLeaveController::class, 'deleteWorkflow']);
+        Route::get('/audit-logs', [AdminLeaveController::class, 'getAuditLogs']);
 
+        // Advanced Overrides
+        Route::patch('/employees/{user}/adjust-quota', [AdminEmployeeController::class, 'adjustQuota']);
+        Route::post('/leave/proxy', [AdminLeaveController::class, 'proxyStore']);
+        Route::patch('/leave/{id}/force-action', [AdminLeaveController::class, 'forceAction']);
     });
 
     // ── Approval Routes (Any authenticated user with approver position) ─────────

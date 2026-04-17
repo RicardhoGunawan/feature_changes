@@ -13,9 +13,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     const bsModal = new bootstrap.Modal(modalEl);
 
     let allEmployees = [];
-    let shiftSelect;
-    let locationSelect;
-    let positionSelect;
 
     // Initialize Select2
     function initSelects() {
@@ -41,14 +38,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    // Shortcut for Select2 change trigger
     function setSelect2Value(selector, value) {
         $(selector).val(value).trigger('change');
     }
 
     async function loadDropdownData() {
         try {
-            // Load Positions
             const resPos = await api.request('/admin/positions');
             if (resPos.success) {
                 const $pos = $('#positionSelect');
@@ -56,7 +51,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 resPos.data.forEach(p => { $pos.append(new Option(p.name, p.id)); });
             }
 
-            // Load Shifts
             const resShift = await api.request('/admin/schedules');
             if (resShift.success) {
                 const $shift = $('#shiftSelect');
@@ -64,22 +58,18 @@ document.addEventListener('DOMContentLoaded', async () => {
                 resShift.data.forEach(s => { $shift.append(new Option(`${s.shift_name} (${s.start_time} - ${s.end_time})`, s.id)); });
             }
 
-            // Load Locations
             const resLoc = await api.request('/admin/locations');
             if (resLoc.success) {
                 const $loc = $('#locationSelect');
                 $loc.empty().append('<option value="">Pilih Lokasi...</option>');
                 resLoc.data.forEach(l => { $loc.append(new Option(`${l.location_name} (${l.radius}m)`, l.id)); });
             }
-
-        } catch (e) {
-            console.error('Failed to load dropdown data', e);
-        }
+        } catch (e) { console.error('Failed to load dropdown data', e); }
     }
 
     async function loadEmployees() {
         if (!tableBody) return;
-        tableBody.innerHTML = `<tr><td colspan="6" class="text-center py-5"><div class="spinner-border text-primary"></div></td></tr>`;
+        tableBody.innerHTML = `<tr><td colspan="7" class="text-center py-5"><div class="spinner-border text-primary"></div></td></tr>`;
         try {
             const response = await api.getEmployees();
             if (response.success) {
@@ -87,33 +77,31 @@ document.addEventListener('DOMContentLoaded', async () => {
                 renderEmployees(allEmployees);
             }
         } catch (error) {
-            tableBody.innerHTML = `<tr><td colspan="6" class="text-center py-5 text-danger">${error.message}</td></tr>`;
+            tableBody.innerHTML = `<tr><td colspan="7" class="text-center py-5 text-danger">${error.message}</td></tr>`;
         }
     }
 
     function renderEmployees(employees) {
         if (!employees || employees.length === 0) {
-            tableBody.innerHTML = `<tr><td colspan="6" class="text-center py-5">Tidak ada data karyawan.</td></tr>`;
+            tableBody.innerHTML = `<tr><td colspan="7" class="text-center py-5">Tidak ada data karyawan.</td></tr>`;
             return;
         }
 
-        // Filter: Jangan tampilkan Administrator di daftar karyawan
-        const filteredEmployees = employees.filter(emp => emp.role !== 'admin' || emp.username !== 'admin');
+        const filteredEmployees = employees.filter(emp => emp.username !== 'admin');
 
         tableBody.innerHTML = filteredEmployees.map(emp => {
-            let badgeHtml = '';
-            if (emp.role === 'administrator') {
-                badgeHtml = `<span class="badge bg-primary text-white rounded-pill" style="font-size: 9px; padding: 2px 8px;">ADMINISTRATOR</span>`;
-            } else {
-                badgeHtml = `<span class="badge bg-secondary bg-opacity-10 text-secondary rounded-pill" style="font-size: 9px; padding: 2px 8px;">EMPLOYEE</span>`;
-            }
+            let badgeHtml = emp.role === 'administrator' 
+                ? `<span class="badge bg-primary text-white rounded-pill" style="font-size: 9px; padding: 2px 8px;">ADMINISTRATOR</span>`
+                : `<span class="badge bg-secondary bg-opacity-10 text-secondary rounded-pill" style="font-size: 9px; padding: 2px 8px;">EMPLOYEE</span>`;
+
+            const typeLabels = { 'permanent': 'Tetap', 'contract': 'Kontrak', 'probation': 'Probation' };
+            const typeLabel = typeLabels[emp.employee_type] || emp.employee_type || '-';
 
             return `
                 <tr>
                     <td class="px-4">
                         <div class="d-flex align-items-center">
-                            <img src="${window.ADMIN_ASSETS_PATH || ''}images/avatar/avatar-default.jpg" class="avatar avatar-sm rounded-circle me-3 shadow-sm" 
-                                 onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(emp.name)}&background=random'">
+                            <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(emp.name)}&background=random" class="avatar avatar-sm rounded-circle me-3 shadow-sm">
                             <div>
                                 <div class="fw-bold text-dark">${emp.name}</div>
                                 ${badgeHtml}
@@ -121,16 +109,20 @@ document.addEventListener('DOMContentLoaded', async () => {
                         </div>
                     </td>
                     <td>
-                        <div class="small fw-medium">${emp.employee_id || '-'}</div>
+                        <div class="small fw-medium">${emp.employee_code || '-'}</div>
                         <div class="text-muted small">@${emp.username}</div>
                     </td>
                     <td>
-                        <div class="small text-dark fw-medium">${emp.position || '-'}</div>
-                        <div class="text-muted small">${emp.department || '-'}</div>
+                        <div class="small text-dark fw-medium">${emp.position_name || emp.position || '-'}</div>
+                        <div class="text-muted small">${emp.department_name || emp.department || '-'}</div>
                     </td>
                     <td>
-                        <div class="small text-dark fw-medium">${emp.shift_name || '-'}</div>
-                        <div class="text-muted small">${emp.work_hours || '-'}</div>
+                        <div class="small text-dark fw-medium">${emp.join_date || '-'}</div>
+                        <div class="text-muted small">${typeLabel}</div>
+                    </td>
+                    <td>
+                        <div class="small fw-bold text-primary">${emp.remaining_leave || 0} Hari</div>
+                        <div class="text-muted x-small">Sisa Tahunan</div>
                     </td>
                     <td>
                         <span class="badge ${emp.is_active != 0 ? 'bg-success' : 'bg-secondary'} bg-opacity-10 ${emp.is_active != 0 ? 'text-success' : 'text-secondary'} rounded-pill px-3 py-2">
@@ -139,6 +131,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                     </td>
                     <td class="text-end px-4">
                         <div class="d-flex justify-content-end gap-2">
+                            <button class="btn btn-light btn-sm btn-icon adjust-quota-btn" data-id="${emp.id}" title="Sesuaikan Kuota Cuti">
+                                <i class="ti ti-wallet text-warning"></i>
+                            </button>
                             <button class="btn btn-light btn-sm btn-icon edit-btn" data-id="${emp.id}" title="Ubah">
                                 <i class="ti ti-edit text-primary"></i>
                             </button>
@@ -151,111 +146,95 @@ document.addEventListener('DOMContentLoaded', async () => {
             `;
         }).join('');
 
-        // Edit
+        // Listeners for actions
+        tableBody.querySelectorAll('.adjust-quota-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.getElementById('adjust_user_id').value = btn.dataset.id;
+                new bootstrap.Modal(document.getElementById('adjustQuotaModal')).show();
+            });
+        });
+
         tableBody.querySelectorAll('.edit-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const id = btn.dataset.id;
-                const emp = allEmployees.find(item => item.id == id);
+            btn.addEventListener('click', () => {
+                const emp = allEmployees.find(item => item.id == btn.dataset.id);
                 if (emp) {
                     employeeIdInput.value = emp.id;
                     modalTitle.innerText = 'Ubah Data Karyawan';
-                    
-                    // Fill Form
                     employeeForm.querySelector('[name="username"]').value = emp.username;
                     employeeForm.querySelector('[name="name"]').value = emp.name;
                     employeeForm.querySelector('[name="email"]').value = emp.email || '';
                     employeeForm.querySelector('[name="phone"]').value = emp.phone || '';
-                    
                     employeeForm.querySelector('[name="role"]').value = emp.role;
+                    employeeForm.querySelector('[name="employee_type"]').value = emp.employee_type || 'permanent';
+                    employeeForm.querySelector('[name="join_date"]').value = emp.join_date || '';
+                    employeeForm.querySelector('[name="annual_leave_quota"]').value = emp.remaining_leave || 12;
                     
                     employeeForm.querySelector('[name="password"]').required = false; 
                     employeeForm.querySelector('[name="password"]').placeholder = '(Kosongkan jika tidak diubah)';
-                    
                     setSelect2Value('#shiftSelect', emp.shift_id || '');
                     setSelect2Value('#locationSelect', emp.location_id || '');
                     setSelect2Value('#positionSelect', emp.position_id || '');
-                    
                     bsModal.show();
                 }
             });
         });
 
-        // Delete
         tableBody.querySelectorAll('.delete-btn').forEach(btn => {
             btn.addEventListener('click', async () => {
-                const confirmed = await api.confirm({
-                    title: 'Hapus Karyawan?',
-                    message: 'Seluruh data profil, histori absensi, dan akses login karyawan ini akan dihapus secara permanen.',
-                    confirmText: 'Hapus Sekarang',
-                    type: 'danger'
-                });
-
-                if (confirmed) {
+                if (await api.confirm({ title: 'Hapus Karyawan?', message: 'Data histori akan dihapus permanen.', type: 'danger' })) {
                     try {
-                        const res = await api.request('/admin/employees', {
-                            method: 'DELETE',
-                            body: JSON.stringify({ id: btn.dataset.id })
-                        });
-                        if (res.success) {
-                            api.notify('Karyawan berhasil dihapus');
-                            loadEmployees();
-                            loadDropdownData(); 
-                        }
-                    } catch (error) {
-                        api.notify(error.message, 'danger');
-                    }
+                        const res = await api.request('/admin/employees', { method: 'DELETE', body: JSON.stringify({ id: btn.dataset.id }) });
+                        if (res.success) { api.notify('Berhasil dihapus'); loadEmployees(); }
+                    } catch (e) { api.notify(e.message, 'danger'); }
                 }
             });
         });
     }
 
-    // Reset form on close
-    modalEl.addEventListener('hidden.bs.modal', () => {
-        employeeForm.reset();
-        employeeIdInput.value = '';
-        modalTitle.innerText = 'Tambah Karyawan Baru';
-        employeeForm.querySelector('[name="password"]').required = true;
-        employeeForm.querySelector('[name="password"]').placeholder = '******';
-        
-        setSelect2Value('#shiftSelect', '');
-        setSelect2Value('#locationSelect', '');
-        setSelect2Value('#positionSelect', '');
-    });
-
-    // Search
-    if (searchInput) {
-        searchInput.addEventListener('input', (e) => {
-            const term = e.target.value.toLowerCase();
-            const filtered = allEmployees.filter(emp => 
-                emp.name.toLowerCase().includes(term) || 
-                (emp.employee_id && emp.employee_id.toLowerCase().includes(term)) || 
-                (emp.department && emp.department.toLowerCase().includes(term)) ||
-                (emp.username && emp.username.toLowerCase().includes(term))
-            );
-            renderEmployees(filtered);
+    // Modal forms
+    const adjustQuotaForm = document.getElementById('adjustQuotaForm');
+    if (adjustQuotaForm) {
+        adjustQuotaForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('adjust_user_id').value;
+            try {
+                const res = await api.request(`/admin/employees/${id}/adjust-quota`, {
+                    method: 'PATCH',
+                    body: JSON.stringify(Object.fromEntries(new FormData(adjustQuotaForm)))
+                });
+                if (res.success) {
+                    api.notify('Kuota disesuaikan');
+                    bootstrap.Modal.getInstance(document.getElementById('adjustQuotaModal')).hide();
+                    adjustQuotaForm.reset();
+                    loadEmployees();
+                }
+            } catch (e) { api.notify(e.message, 'danger'); }
         });
     }
 
-    // Submit Form
     if (employeeForm) {
         employeeForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const formData = new FormData(employeeForm);
-            const data = Object.fromEntries(formData.entries());
-
             try {
-                const response = await api.saveEmployee(data);
-                if (response.success) {
-                    api.showToast(data.id ? 'Data karyawan berhasil diperbarui' : 'Karyawan berhasil ditambahkan');
-                    bsModal.hide();
-                    loadEmployees();
-                    loadDropdownData();
+                if (await api.saveEmployee(Object.fromEntries(new FormData(employeeForm)))) {
+                    api.notify('Data disimpan'); bsModal.hide(); loadEmployees();
                 }
-            } catch (error) {
-                api.showToast(error.message, 'danger');
-            }
+            } catch (e) { api.notify(e.message, 'danger'); }
         });
     }
+
+    if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+            const term = e.target.value.toLowerCase();
+            renderEmployees(allEmployees.filter(emp => emp.name.toLowerCase().includes(term) || (emp.employee_id && emp.employee_id.toLowerCase().includes(term))));
+        });
+    }
+
+    modalEl.addEventListener('hidden.bs.modal', () => {
+        employeeForm.reset(); employeeIdInput.value = ''; modalTitle.innerText = 'Tambah Karyawan';
+        employeeForm.querySelector('[name="password"]').required = true;
+        setSelect2Value('#shiftSelect', ''); setSelect2Value('#locationSelect', ''); setSelect2Value('#positionSelect', '');
+    });
 
     initSelects();
     loadDropdownData();

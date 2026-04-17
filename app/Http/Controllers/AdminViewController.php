@@ -90,6 +90,24 @@ class AdminViewController extends Controller
         return view('admin.positions');
     }
 
+    public function leavePolicies()
+    {
+        $this->checkAccess('manage_leave');
+        return view('admin.leave_policies');
+    }
+
+    public function approvalWorkflows()
+    {
+        $this->checkAccess('manage_leave');
+        return view('admin.approval_workflows');
+    }
+
+    public function auditLogs()
+    {
+        $this->checkAccess('view_logs');
+        return view('admin.audit_logs');
+    }
+
     public function login()
     {
         return view('admin.login');
